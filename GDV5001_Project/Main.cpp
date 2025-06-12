@@ -1,6 +1,42 @@
 #include"core.h"
-const int intWidth = 512;
-const int intHeight = 512;
+#include"Shader.h"
+#include "camera.h"
+const int width = 512;
+const int height = 512;
+void framebuffer_resize(GLFWwindow* window, int fbw, int fbh);
+
+Vertex vertices[] =
+{
+	glm::vec3(0.0f,0.5f,0.0f),		glm::vec3(1.0f,0.0f,0.0f),		glm::vec2(0.f,1.f),
+	glm::vec3(-0.5f,-0.5f,0.0f),	glm::vec3(0.0f, 1.0f, 0.0f),	glm::vec2(0.f,0.f),
+	glm::vec3(0.5f, -0.5f, 0.0f),   glm::vec3(0.0f, 0.0f, 1.0f),	glm::vec2(1.f,0.f)
+
+};
+unsigned nrOfVertices = sizeof(vertices) / sizeof(Vertex);
+
+GLuint indices[] =
+{
+	0,1,2
+};
+unsigned nrOfIndices = sizeof(indices) / sizeof(GLuint);
+
+
+void updateInput(GLFWwindow*window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, GLFW_TRUE);
+	}
+}
+void framebuffer_resize(GLFWwindow* window, int fbw, int fbh)
+{
+	glViewport(0, 0, fbw, fbh);
+
+}
+
+
+
+
 
 int main()
 
@@ -14,15 +50,23 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
 
-	GLFWwindow* window = glfwCreateWindow(intWidth, intHeight,"DUGEON KEEPERS 2", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height,"DUGEON KEEPERS 2", NULL, NULL);
 
-	glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
-	glViewport(0, 0, framebufferWidth, framebufferHeight);
+	glfwSetFramebufferSizeCallback(window, framebuffer_resize);
 
+	//glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
+	//glViewport(0, 0, framebufferWidth, framebufferHeight);
+
+
+	//Init GLEW
 	glfwMakeContextCurrent(window);
+
+
+	Shader shaderProgram("Default.vert", "Default.frag");
+
 
 	glewExperimental = GL_TRUE;
 
@@ -33,23 +77,72 @@ int main()
 
 	}
 
+
+	//OPpenGL Options
+
+	glEnable(GL_DEPTH_TEST);
+
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+	//Shaders
+	
+
+	//GENRATING VAO
+	GLuint VAO; 
+	glCreateVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+
+	GLuint VBO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+
+	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
+	//MAIN LOOP
 	while (!glfwWindowShouldClose(window))
 	{
-		
+		//UPDATE INPUT
 		glfwPollEvents();
 
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+		glm::mat4 model = glm::mat4(1.0f);
+		glm::mat4 view = glm::mat4(1.0f);
+		glm::mat4 proj = glm::mat4(1.0f);
+		view = glm::translate(view, glm::vec3(0.0f, -0.f, -2.0f));
+		proj = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
+
+
+		//UPDATE
+		updateInput(window);
+
+		camera.Inputs(window);
+		camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgram, "camMatrix");
+		//clear
+		glClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 
-
+		//END DRAW
 		glfwSwapBuffers(window);
 		glFlush();
 
-
+	
 	}
 	
+
+
 	glfwTerminate();
 	return 0;
 
 }
+
