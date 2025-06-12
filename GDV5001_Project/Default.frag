@@ -1,11 +1,12 @@
-#version 440
+#version 410 core
 
-in vec3 vs_position;
-in vec3 vs_color;
-in vec2 vs_texcoord;
-out vec4 fs_color;
+out vec4 FragColor;
+
+in vec3 color;
+
 
 void main()
 {
-	fs_color=vec4(vs_color,1.f);
+	Fragcolor=vec(color,1.0f);
+
 }
